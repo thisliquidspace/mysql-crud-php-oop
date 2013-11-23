@@ -1,7 +1,7 @@
 <?php
 /*
  * @Author Rory Standley <rorystandley@gmail.com>
- * @Version 1.0
+ * @Version 1.3
  * @Package Database
  */
 class Database{
@@ -21,6 +21,8 @@ class Database{
 	 */
 	private $con = false; // Check to see if the connection is active
 	private $result = array(); // Any results from a query will be stored here
+    private $myQuery = "";// used for debugging process with SQL return
+    private $numResults = "";// used for returning the number of rows
 	
 	// Function to make connection to database
 	public function connect(){
@@ -63,6 +65,7 @@ class Database{
 	
 	public function sql($sql){
 		$query = @mysql_query($sql);
+        $this->myQuery = $sql; // Pass back the SQL
 		if($query){
 			// If the query returns >= 1 assign the number of rows to numResults
 			$this->numResults = mysql_num_rows($query);
@@ -73,12 +76,10 @@ class Database{
                	for($x = 0; $x < count($key); $x++){
                		// Sanitizes keys so only alphavalues are allowed
                    	if(!is_int($key[$x])){
-                   		if(mysql_num_rows($query) > 1){
+                   		if(mysql_num_rows($query) >= 1){
                    			$this->result[$i][$key[$x]] = $r[$key[$x]];
-						}else if(mysql_num_rows($query) < 1){
-							$this->result = null;
 						}else{
-							$this->result[$key[$x]] = $r[$key[$x]];
+							$this->result = null;
 						}
 					}
 				}
@@ -91,21 +92,22 @@ class Database{
 	}
 	
 	// Function to SELECT from the database
-    	public function select($table, $rows = '*', $join = null, $where = null, $order = null, $limit = null){
-    		// Create query from the variables passed to the function
-    		$q = 'SELECT '.$rows.' FROM '.$table;
+	public function select($table, $rows = '*', $join = null, $where = null, $order = null, $limit = null){
+		// Create query from the variables passed to the function
+		$q = 'SELECT '.$rows.' FROM '.$table;
 		if($join != null){
 			$q .= ' JOIN '.$join;
 		}
-		if($where != null){
-        		$q .= ' WHERE '.$where;
-			}
-        	if($order != null){
-            		$q .= ' ORDER BY '.$order;
+        if($where != null){
+        	$q .= ' WHERE '.$where;
 		}
-        	if($limit != null){
-            		$q .= ' LIMIT '.$limit;
-        	}
+        if($order != null){
+            $q .= ' ORDER BY '.$order;
+		}
+        if($limit != null){
+            $q .= ' LIMIT '.$limit;
+        }
+        $this->myQuery = $q; // Pass back the SQL
 		// Check to see if the table exists
         if($this->tableExists($table)){
         	// The table exists, run the query
@@ -120,12 +122,10 @@ class Database{
                 	for($x = 0; $x < count($key); $x++){
                 		// Sanitizes keys so only alphavalues are allowed
                     	if(!is_int($key[$x])){
-                    		if(mysql_num_rows($query) > 1){
+                    		if(mysql_num_rows($query) >= 1){
                     			$this->result[$i][$key[$x]] = $r[$key[$x]];
-							}else if(mysql_num_rows($query) < 1){
-								$this->result = null;
 							}else{
-								$this->result[$key[$x]] = $r[$key[$x]];
+								$this->result = null;
 							}
 						}
 					}
@@ -145,6 +145,7 @@ class Database{
     	// Check to see if the table exists
     	 if($this->tableExists($table)){
     	 	$sql='INSERT INTO `'.$table.'` (`'.implode('`, `',array_keys($params)).'`) VALUES (\'' . implode('\', \'', $params) . '\')';
+            $this->myQuery = $sql; // Pass back the SQL
             // Make the query to insert to the database
             if($ins = @mysql_query($sql)){
             	array_push($this->result,mysql_insert_id());
@@ -171,6 +172,7 @@ class Database{
             // Submit query to database
             if($del = @mysql_query($delete)){
             	array_push($this->result,mysql_affected_rows());
+                $this->myQuery = $delete; // Pass back the SQL
                 return true; // The query exectued correctly
             }else{
             	array_push($this->result,mysql_error());
@@ -194,6 +196,7 @@ class Database{
 			// Create the query
 			$sql='UPDATE '.$table.' SET '.implode(',',$args).' WHERE '.$where;
 			// Make query to database
+            $this->myQuery = $sql; // Pass back the SQL
             if($query = @mysql_query($sql)){
             	array_push($this->result,mysql_affected_rows());
             	return true; // Update has been successful
@@ -223,6 +226,20 @@ class Database{
     public function getResult(){
         $val = $this->result;
         $this->result = array();
+        return $val;
+    }
+
+    //Pass the SQL back for debugging
+    public function getSql(){
+        $val = $this->myQuery;
+        $this->myQuery = array();
+        return $val;
+    }
+
+    //Pass the number of rows back
+    public function numRows(){
+        $val = $this->numResults;
+        $this->numResults = array();
         return $val;
     }
 } 
