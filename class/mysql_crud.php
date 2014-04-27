@@ -12,7 +12,7 @@ class Database{
 	 * Database class
 	 */
 	private $db_host = "localhost";  // Change as required
-	private $db_user = "username";  // Change as required
+	private $db_user = "user";  // Change as required
 	private $db_pass = "password";  // Change as required
 	private $db_name = "database";	// Change as required
 	
@@ -144,7 +144,7 @@ class Database{
     public function insert($table,$params=array()){
     	// Check to see if the table exists
     	 if($this->tableExists($table)){
-    	 	$sql='INSERT INTO `'.$table.'` (`'.implode('`, `',array_keys($params)).'`) VALUES (\'' . implode('\', \'', $params) . '\')';
+    	 	$sql='INSERT INTO `'.$table.'` (`'.implode('`, `',array_keys($params)).'`) VALUES ("' . implode('", "', $params) . '")';
             $this->myQuery = $sql; // Pass back the SQL
             // Make the query to insert to the database
             if($ins = @mysql_query($sql)){
@@ -241,5 +241,10 @@ class Database{
         $val = $this->numResults;
         $this->numResults = array();
         return $val;
+    }
+
+    // Escape your string
+    public function escapeString($data){
+        return mysql_real_escape_string($data);
     }
 } 
