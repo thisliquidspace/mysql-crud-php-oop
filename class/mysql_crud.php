@@ -28,6 +28,7 @@ class Database{
 	public function connect(){
 		if(!$this->con){
 			$myconn = @mysql_connect($this->db_host,$this->db_user,$this->db_pass);  // mysql_connect() with variables defined at the start of Database class
+            @mysql_set_charset('utf8', $myconn);
             if($myconn){
             	$seldb = @mysql_select_db($this->db_name,$myconn); // Credentials have been pass through mysql_connect() now select the database
                 if($seldb){
